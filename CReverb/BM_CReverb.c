@@ -37,7 +37,9 @@ extern "C" {
     void BM_CReverbPointersToNull(struct BM_CReverb* rv);
     void BM_CReverbRandomiseOrder(float* list, uint seed, size_t length);
     void BM_CReverbInitDelayOutputSigns(struct BM_CReverb* rv);
-
+    void BM_CReverbUpdateMainFilter(struct BM_CReverb* rv);
+    void BM_CReverbUpdateSettings(struct BM_CReverb* rv);
+    
     
     
     
@@ -50,8 +52,6 @@ extern "C" {
         // initialize all pointers to NULL
         BM_CReverbPointersToNull(rv);
         
-        // create setup for an empty 2 channel filter with 2 levels of biquad filtering
-        rv->stereoFilterSetup = vDSP_biquadm_CreateSetup(rv->mainFilterCoefficients, 2, 2);
         // create pointers to the various filter sections
         rv->fcChLSec0 = rv->mainFilterCoefficients + 0*2*5 + 0*5;
         rv->fcChLSec1 = rv->mainFilterCoefficients + 0*2*5 + 1*5;
@@ -81,7 +81,7 @@ extern "C" {
         
         
         // initialize all the delays and delay-dependent settings
-        BM_CReverbUpdateNumDelayUnits(rv);
+        BM_CReverbUpdateSettings(rv);
     }
     
     
@@ -93,6 +93,13 @@ extern "C" {
      */
     void BM_CReverbProcessBuffer(struct BM_CReverb* rv, const float* inputL, const float* inputR, float* outputL, float* outputR, size_t numSamples){
         
+        // don't process anything if there are nan values in the input
+        if (isnan(inputL[0]) || isnan(inputR[0])) {
+            memset(outputL, 0, sizeof(float)*numSamples);
+            memset(outputR, 0, sizeof(float)*numSamples);
+            return;
+        }
+        
         
         // this requires buffer memory so we do it in limited sized chunks to
         // avoid having to adjust the buffer length at runtime
@@ -103,7 +110,7 @@ extern "C" {
             
             
             if(rv->autoSustain){
-                // check volume fo the current frame
+                // check volume of the current frame
                 float volume;
                 vDSP_svesq(inputL+bufferedProcessingIndex, 1, &volume, samplesMixingNext);
                 
@@ -124,19 +131,8 @@ extern "C" {
             
             
             // process the reverb to get the wet signal
-            for (size_t i=0; i<numSamples; i++)
+            for (size_t i=bufferedProcessingIndex; i < bufferedProcessingIndex+samplesMixingNext; i++)
                 BM_CReverbProcessWetSample(rv, inputL[i], inputR[i], &outputL[i], &outputR[i]);
-            
-            
-            
-            // filter the wet output signal (highpass and lowpass)
-            //
-            // combine the two channels into a single 2-dimensional array as required
-            // by vDSP_biquadm
-            rv->twoChannelFilterData[0] = outputL;
-            rv->twoChannelFilterData[1] = outputR;
-            // apply a multilevel biquad filter to both channels
-            vDSP_biquadm(rv->stereoFilterSetup, (const float* _Nonnull * _Nonnull)rv->twoChannelFilterData, 1, rv->twoChannelFilterData, 1, numSamples);
             
             
             
@@ -149,9 +145,11 @@ extern "C" {
             memcpy(outputL+bufferedProcessingIndex, rv->leftOutputTemp, sizeof(float)*samplesMixingNext);
             
             
+            
             // mix dry and wet signals
-            vDSP_vsmsma(rv->dryL, 1, &rv->dryGain, outputL+bufferedProcessingIndex, 1, &rv->wetGain, outputL+bufferedProcessingIndex, 1, numSamples);
-            vDSP_vsmsma(rv->dryR, 1, &rv->dryGain, outputR+bufferedProcessingIndex, 1, &rv->wetGain, outputR+bufferedProcessingIndex, 1, numSamples);
+            vDSP_vsmsma(rv->dryL, 1, &rv->dryGain, outputL+bufferedProcessingIndex, 1, &rv->wetGain, outputL+bufferedProcessingIndex, 1, samplesMixingNext);
+            vDSP_vsmsma(rv->dryR, 1, &rv->dryGain, outputR+bufferedProcessingIndex, 1, &rv->wetGain, outputR+bufferedProcessingIndex, 1, samplesMixingNext);
+            
             
             
             // update the number of samples left to process in the buffer
@@ -161,22 +159,46 @@ extern "C" {
         }
         
         
+        
+        // filter the wet output signal (highpass and lowpass)
+        //
+        // combine the two channels into a single 2-dimensional array as required
+        // by vDSP_biquadm
+        rv->twoChannelFilterData[0] = outputL;
+        rv->twoChannelFilterData[1] = outputR;
+        // apply a multilevel biquad filter to both channels
+        vDSP_biquadm(rv->mainFilterSetup, (const float* _Nonnull * _Nonnull)rv->twoChannelFilterData, 1, rv->twoChannelFilterData, 1, numSamples);
+        
+        
+        
         /*
          * if an update requiring memory allocation was requested, do it now.
          */
-        if (rv->settingsQueuedForUpdate) BM_CReverbUpdateNumDelayUnits(rv);
+        if (rv->settingsQueuedForUpdate)
+            BM_CReverbUpdateSettings(rv);
     }
     
     
     
+    void BM_CReverbUpdateSettings(struct BM_CReverb* rv){
+        BM_CReverbUpdateNumDelayUnits(rv);
+        BM_CReverbUpdateMainFilter(rv);
+    }
     
     void BM_CReverbSetSlowDecayState(struct BM_CReverb* rv, bool slowDecay){
         rv->slowDecay = slowDecay;
     }
     
-    
     void BM_CReverbSetAutoSustain(struct BM_CReverb* rv, bool autoSustain){
         rv->autoSustain = autoSustain;
+    }
+    
+    
+    void BM_CReverbUpdateMainFilter(struct BM_CReverb* rv){
+        if(rv->mainFilterSetup)
+            vDSP_biquadm_DestroySetup(rv->mainFilterSetup);
+        
+        rv->mainFilterSetup = vDSP_biquadm_CreateSetup(rv->mainFilterCoefficients, 2, 2);
     }
     
     
@@ -213,9 +235,10 @@ extern "C" {
             *a2 = (gamma_2 - gamma_x_sqrt_2 + 1.0) * one_over_denominator;
         }
         
-        memcpy(rv->fcChLSec0, coeffs, sizeof(float)*5);
-        memcpy(rv->fcChRSec0, coeffs, sizeof(float)*5);
-        vDSP_biquadm_CreateSetup(rv->mainFilterCoefficients, 2, 2);
+        // copy the same filter coefficients to both channels
+        memcpy(rv->fcChLSec0, coeffs, sizeof(double)*5);
+        memcpy(rv->fcChRSec0, coeffs, sizeof(double)*5);
+        rv->settingsQueuedForUpdate = true;
     }
     
     
@@ -227,13 +250,13 @@ extern "C" {
     void BM_CReverbSetLowPassFC(struct BM_CReverb* rv, float fc){
         rv->lowpassFC = fc;
         
-        float coeffs [5];
+        double coeffs [5];
         
-        float* b0 = coeffs;
-        float* b1 = b0 + 1;
-        float* b2 = b1 + 1;
-        float* a1 = b2 + 1;
-        float* a2 = a1 + 1;
+        double* b0 = coeffs;
+        double* b1 = b0 + 1;
+        double* b2 = b1 + 1;
+        double* a1 = b2 + 1;
+        double* a2 = a1 + 1;
         
         // if fc is greater than 99% of the nyquyst frequency, bypass the filter
         if (fc > 0.99*0.5*rv->sampleRate){
@@ -256,9 +279,10 @@ extern "C" {
             *a2 = (gamma_2 - gamma_x_sqrt_2 + 1.0) * one_over_denominator;
         }
         
-        memcpy(rv->fcChLSec1, coeffs, sizeof(float)*5);
-        memcpy(rv->fcChRSec1, coeffs, sizeof(float)*5);
-        vDSP_biquadm_CreateSetup(rv->mainFilterCoefficients, 2, 2);
+        // copy the same filter coefficients to both channels
+        memcpy(rv->fcChLSec1, coeffs, sizeof(double)*5);
+        memcpy(rv->fcChRSec1, coeffs, sizeof(double)*5);
+        rv->settingsQueuedForUpdate = true;
     }
     
     
@@ -460,8 +484,12 @@ extern "C" {
     // sets the amount of mixing between the two stereo channels
     void BM_CReverbSetCrossStereoMix(struct BM_CReverb* rv, float crossMix){
         assert(crossMix >= 0 && crossMix <=1);
-        rv->crossStereoMix = crossMix;
-        rv->straightStereoMix = sqrtf(1.0f - crossMix*crossMix);
+        
+        // maximum mix setting is equal amounts of L and R in both channels
+        float maxMix = 1.0/sqrt(2.0);
+        
+        rv->crossStereoMix = crossMix*maxMix;
+        rv->straightStereoMix = sqrtf(1.0f - crossMix*crossMix*maxMix*maxMix);
     }
     
     
@@ -587,7 +615,6 @@ extern "C" {
         if (rv->bufferLengths) BM_CReverbFree(rv);
         
         
-        
         /*
          * allocate memory for smaller buffers
          */
@@ -640,6 +667,7 @@ extern "C" {
          * delay-time-dependent parameters
          */
         BM_CReverbUpdateDelayTimes(rv);
+        
         
         rv->settingsQueuedForUpdate = false;
     }
@@ -708,6 +736,7 @@ extern "C" {
         rv->delayOutputSigns = NULL;
         rv->dryL = NULL;
         rv->dryR = NULL;
+        rv->mainFilterSetup = NULL;
     }
     
     
@@ -735,6 +764,7 @@ extern "C" {
         free(rv->delayOutputSigns);
         free(rv->dryL);
         free(rv->dryR);
+        vDSP_biquadm_DestroySetup(rv->mainFilterSetup);
         
         BM_CReverbPointersToNull(rv);
     }
@@ -850,14 +880,14 @@ extern "C" {
         /*
          * Mix the feedback signal
          *
-         * The code below does the first two stages of a fast hadamard transform, 
+         * The code below does the first two stages of a fast hadamard transform,
          * followed by some swapping.
-         * Leaving the transform incomplete is equivalent to using a 
+         * Leaving the transform incomplete is equivalent to using a
          * block-circulant mixing matrix. Typically, block circulant mixing is
          * done using the last two stages of the fast hadamard transform. Here
-         * we use the first two stages instead because it permits us to do 
+         * we use the first two stages instead because it permits us to do
          * vectorised additions and subtractions with a stride of 1.
-         * 
+         *
          * Regarding block-circulant mixing, see: https://www.researchgate.net/publication/282252790_Flatter_Frequency_Response_from_Feedback_Delay_Network_Reverbs
          */
         //
