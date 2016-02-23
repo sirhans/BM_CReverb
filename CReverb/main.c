@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "BM_CReverb.h"
+#include "BMCReverb.h"
 
 #define TESTBUFFERLENGTH 128
 
@@ -20,22 +20,22 @@ int main(int argc, const char * argv[]) {
     
     
     // initialize the reverb
-    struct BM_CReverb rv;
-    BM_CReverbInit(&rv);
+    struct BMCReverb rv;
+    BMCReverbInit(&rv);
     
     
     // set a long decay time
-    BM_CReverbSetRT60DecayTime(&rv, 1.30);
+    BMCReverbSetRT60DecayTime(&rv, 1.30);
     // and a 100% wet reverb sound
-    BM_CReverbSetWetGain(&rv, 1.0);
+    BMCReverbSetWetGain(&rv, 1.0);
     // set high frequency decay multiplier
     //BM_CReverbSetHFDecayMultiplier(&rv, 6.0);
     // don't mix l and r channels
-    BM_CReverbSetCrossStereoMix(&rv, 0.5f);
+    BMCReverbSetCrossStereoMix(&rv, 0.5f);
     // increase the size of the network
     //BM_CReverbSetNumDelayUnits(&rv, 16);
     // adjust the highpass filter frequency
-    BM_CReverbSetHighPassFC(&rv, 250.0f);
+    BMCReverbSetHighPassFC(&rv, 250.0f);
     
 
     float testBufferInL [TESTBUFFERLENGTH];

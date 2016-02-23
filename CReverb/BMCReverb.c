@@ -1,12 +1,12 @@
 //
-//  BM_CReverb.c
+//  BMCReverb.c
 //  A feedback delay network reverb for Macintosh and iOS
 //
 //  Created by bluemangoo@bluemangoo.com on 7/2/16.
 //  This file is provided free without any restrictions on its use.
 //
 
-#include "BM_CReverb.h"
+#include "BMCReverb.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,8 +16,8 @@
 extern "C" {
 #endif
     
-#define BM_CREVERB_MATRIXATTENUATION 0.5 // 1/sqrt(4) keep the mixing unitary
-#define BM_CREVERB_TEMPBUFFERLENGTH 256 // buffered operation in chunks of 256
+#define BMCREVERB_MATRIXATTENUATION 0.5 // 1/sqrt(4) keep the mixing unitary
+#define BMCREVERB_TEMPBUFFERLENGTH 256 // buffered operation in chunks of 256
     
 #define BM_MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 #define BM_MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
@@ -26,19 +26,19 @@ extern "C" {
     /*
      * these functions should be called only from functions within this file
      */
-    void BM_CReverbInitIndices(struct BMCReverb* rv);
-    void BM_CReverbIncrementIndices(struct BMCReverb* rv);
-    void BM_CReverbUpdateDelayTimes(struct BMCReverb* rv);
-    void BM_CReverbUpdateDecayHighShelfFilters(struct BMCReverb* rv);
-    void BM_CReverbUpdateRT60DecayTime(struct BMCReverb* rv);
-    double BM_CReverbDelayGainFromRT60(double rt60, double delayTime);
-    void BM_CReverbProcessWetSample(struct BMCReverb* rv, float inputL, float inputR, float* outputL, float* outputR);
-    void BM_CReverbUpdateNumDelayUnits(struct BMCReverb* rv);
-    void BM_CReverbPointersToNull(struct BMCReverb* rv);
-    void BM_CReverbRandomiseOrder(float* list, uint seed, size_t length);
-    void BM_CReverbInitDelayOutputSigns(struct BMCReverb* rv);
-    void BM_CReverbUpdateMainFilter(struct BMCReverb* rv);
-    void BM_CReverbUpdateSettings(struct BMCReverb* rv);
+    void BMCReverbInitIndices(struct BMCReverb* rv);
+    void BMCReverbIncrementIndices(struct BMCReverb* rv);
+    void BMCReverbUpdateDelayTimes(struct BMCReverb* rv);
+    void BMCReverbUpdateDecayHighShelfFilters(struct BMCReverb* rv);
+    void BMCReverbUpdateRT60DecayTime(struct BMCReverb* rv);
+    double BMCReverbDelayGainFromRT60(double rt60, double delayTime);
+    void BMCReverbProcessWetSample(struct BMCReverb* rv, float inputL, float inputR, float* outputL, float* outputR);
+    void BMCReverbUpdateNumDelayUnits(struct BMCReverb* rv);
+    void BMCReverbPointersToNull(struct BMCReverb* rv);
+    void BMCReverbRandomiseOrder(float* list, uint seed, size_t length);
+    void BMCReverbInitDelayOutputSigns(struct BMCReverb* rv);
+    void BMCReverbUpdateMainFilter(struct BMCReverb* rv);
+    void BMCReverbUpdateSettings(struct BMCReverb* rv);
     
     
     
@@ -48,9 +48,9 @@ extern "C" {
     /*
      * Initialization: this MUST be called before running the reverb
      */
-    void BM_CReverbInit(struct BMCReverb* rv){
+    void BMCReverbInit(struct BMCReverb* rv){
         // initialize all pointers to NULL
-        BM_CReverbPointersToNull(rv);
+        BMCReverbPointersToNull(rv);
         
         // create pointers to the various filter sections
         rv->fcChLSec0 = rv->mainFilterCoefficients + 0*2*5 + 0*5;
@@ -59,29 +59,29 @@ extern "C" {
         rv->fcChRSec1 = rv->mainFilterCoefficients + 1*2*5 + 1*5;
         
         // initialize default settings
-        rv->sampleRate = BM_CREVERB_DEFAULTSAMPLERATE;
-        rv->delayUnits = BM_CREVERB_NUMDELAYUNITS;
-        rv->matrixAttenuation = BM_CREVERB_MATRIXATTENUATION;
-        rv->highShelfFC = BM_CREVERB_HIGHSHELFFC;
-        rv->hfDecayMultiplier = BM_CREVERB_HFDECAYMULTIPLIER;
-        rv->hfSlowDecayMultiplier = BM_CREVERB_HFSLOWDECAYMULTIPLIER;
-        rv->minDelay_seconds = BM_CREVERB_PREDELAY;
-        rv->maxDelay_seconds = BM_CREVERB_ROOMSIZE;
-        rv->rt60 = BM_CREVERB_RT60;
-        rv->delayUnits = BM_CREVERB_NUMDELAYUNITS;
+        rv->sampleRate = BMCREVERB_DEFAULTSAMPLERATE;
+        rv->delayUnits = BMCREVERB_NUMDELAYUNITS;
+        rv->matrixAttenuation = BMCREVERB_MATRIXATTENUATION;
+        rv->highShelfFC = BMCREVERB_HIGHSHELFFC;
+        rv->hfDecayMultiplier = BMCREVERB_HFDECAYMULTIPLIER;
+        rv->hfSlowDecayMultiplier = BMCREVERB_HFSLOWDECAYMULTIPLIER;
+        rv->minDelay_seconds = BMCREVERB_PREDELAY;
+        rv->maxDelay_seconds = BMCREVERB_ROOMSIZE;
+        rv->rt60 = BMCREVERB_RT60;
+        rv->delayUnits = BMCREVERB_NUMDELAYUNITS;
         rv->slowDecay = false;
         rv->settingsQueuedForUpdate = false;
-        rv->slowDecayRT60 = BM_CREVERB_SLOWDECAYRT60;
-        rv->newNumDelayUnits = BM_CREVERB_NUMDELAYUNITS;
+        rv->slowDecayRT60 = BMCREVERB_SLOWDECAYRT60;
+        rv->newNumDelayUnits = BMCREVERB_NUMDELAYUNITS;
         rv->autoSustain=false;
-        BM_CReverbSetHighPassFC(rv, BM_CREVERB_HIGHPASS_FC);
-        BM_CReverbSetLowPassFC(rv, BM_CREVERB_LOWPASS_FC);
-        BM_CReverbSetWetGain(rv, BM_CREVERB_WETMIX);
-        BM_CReverbSetCrossStereoMix(rv, BM_CREVERB_CROSSSTEREOMIX);
+        BMCReverbSetHighPassFC(rv, BMCREVERB_HIGHPASS_FC);
+        BMCReverbSetLowPassFC(rv, BMCREVERB_LOWPASS_FC);
+        BMCReverbSetWetGain(rv, BMCREVERB_WETMIX);
+        BMCReverbSetCrossStereoMix(rv, BMCREVERB_CROSSSTEREOMIX);
         
         
         // initialize all the delays and delay-dependent settings
-        BM_CReverbUpdateSettings(rv);
+        BMCReverbUpdateSettings(rv);
     }
     
     
@@ -91,7 +91,7 @@ extern "C" {
      * works in place AND allows left and right inputs to point to
      * the same data for mono to stereo operation
      */
-    void BM_CReverbProcessBuffer(struct BMCReverb* rv, const float* inputL, const float* inputR, float* outputL, float* outputR, size_t numSamples){
+    void BMCReverbProcessBuffer(struct BMCReverb* rv, const float* inputL, const float* inputR, float* outputL, float* outputR, size_t numSamples){
         
         // don't process anything if there are nan values in the input
         if (isnan(inputL[0]) || isnan(inputR[0])) {
@@ -104,7 +104,7 @@ extern "C" {
         // this requires buffer memory so we do it in limited sized chunks to
         // avoid having to adjust the buffer length at runtime
         size_t samplesLeftToMix = numSamples;
-        size_t samplesMixingNext = BM_MIN(BM_CREVERB_TEMPBUFFERLENGTH,samplesLeftToMix);
+        size_t samplesMixingNext = BM_MIN(BMCREVERB_TEMPBUFFERLENGTH,samplesLeftToMix);
         size_t bufferedProcessingIndex = 0;
         while (samplesLeftToMix != 0) {
             
@@ -116,11 +116,11 @@ extern "C" {
                 
                 // if the volume is high, enable sustain mode
                 if((volume / (float)samplesMixingNext) > 0.001)
-                    BM_CReverbSetSlowDecayState(rv, true);
+                    BMCReverbSetSlowDecayState(rv, true);
                 
                 // if the volume is very low, disable sustain mode
                 if((volume / (float)samplesMixingNext) < 0.00001)
-                    BM_CReverbSetSlowDecayState(rv, false);
+                    BMCReverbSetSlowDecayState(rv, false);
             }
             
             
@@ -132,7 +132,7 @@ extern "C" {
             
             // process the reverb to get the wet signal
             for (size_t i=bufferedProcessingIndex; i < bufferedProcessingIndex+samplesMixingNext; i++)
-                BM_CReverbProcessWetSample(rv, inputL[i], inputR[i], &outputL[i], &outputR[i]);
+                BMCReverbProcessWetSample(rv, inputL[i], inputR[i], &outputL[i], &outputR[i]);
             
             
             
@@ -155,7 +155,7 @@ extern "C" {
             // update the number of samples left to process in the buffer
             samplesLeftToMix -= samplesMixingNext;
             bufferedProcessingIndex += samplesMixingNext;
-            samplesMixingNext = BM_MIN(BM_CREVERB_TEMPBUFFERLENGTH,samplesLeftToMix);
+            samplesMixingNext = BM_MIN(BMCREVERB_TEMPBUFFERLENGTH,samplesLeftToMix);
         }
         
         
@@ -175,26 +175,26 @@ extern "C" {
          * if an update requiring memory allocation was requested, do it now.
          */
         if (rv->settingsQueuedForUpdate)
-            BM_CReverbUpdateSettings(rv);
+            BMCReverbUpdateSettings(rv);
     }
     
     
     
-    void BM_CReverbUpdateSettings(struct BMCReverb* rv){
-        BM_CReverbUpdateNumDelayUnits(rv);
-        BM_CReverbUpdateMainFilter(rv);
+    void BMCReverbUpdateSettings(struct BMCReverb* rv){
+        BMCReverbUpdateNumDelayUnits(rv);
+        BMCReverbUpdateMainFilter(rv);
     }
     
-    void BM_CReverbSetSlowDecayState(struct BMCReverb* rv, bool slowDecay){
+    void BMCReverbSetSlowDecayState(struct BMCReverb* rv, bool slowDecay){
         rv->slowDecay = slowDecay;
     }
     
-    void BM_CReverbSetAutoSustain(struct BMCReverb* rv, bool autoSustain){
+    void BMCReverbSetAutoSustain(struct BMCReverb* rv, bool autoSustain){
         rv->autoSustain = autoSustain;
     }
     
     
-    void BM_CReverbUpdateMainFilter(struct BMCReverb* rv){
+    void BMCReverbUpdateMainFilter(struct BMCReverb* rv){
         if(rv->mainFilterSetup)
             vDSP_biquadm_DestroySetup(rv->mainFilterSetup);
         
@@ -203,7 +203,7 @@ extern "C" {
     
     
     // second order butterworth highpass filter on wet signal
-    void BM_CReverbSetHighPassFC(struct BMCReverb* rv, float fc){
+    void BMCReverbSetHighPassFC(struct BMCReverb* rv, float fc){
         rv->highpassFC = fc;
         
         double coeffs[5];
@@ -247,7 +247,7 @@ extern "C" {
     
     
     // second order butterworth lowpass on wet signal
-    void BM_CReverbSetLowPassFC(struct BMCReverb* rv, float fc){
+    void BMCReverbSetLowPassFC(struct BMCReverb* rv, float fc){
         rv->lowpassFC = fc;
         
         double coeffs [5];
@@ -289,26 +289,26 @@ extern "C" {
     
     
     // this is the decay time of the reverb in normal operation
-    void BM_CReverbSetRT60DecayTime(struct BMCReverb* rv, float rt60){
+    void BMCReverbSetRT60DecayTime(struct BMCReverb* rv, float rt60){
         assert(rt60 >= 0.0);
         rv->rt60 = rt60;
-        BM_CReverbUpdateRT60DecayTime(rv);
-        BM_CReverbUpdateDecayHighShelfFilters(rv);
+        BMCReverbUpdateRT60DecayTime(rv);
+        BMCReverbUpdateDecayHighShelfFilters(rv);
     }
     
     
     
     
     // this is the decay time for when the hold pedal is down
-    void BM_CReverbSetSlowRT60DecayTime(struct BMCReverb* rv, float slowRT60){
+    void BMCReverbSetSlowRT60DecayTime(struct BMCReverb* rv, float slowRT60){
         assert(slowRT60 >= 0.0);
         rv->slowDecayRT60 = slowRT60;
-        BM_CReverbUpdateRT60DecayTime(rv);
+        BMCReverbUpdateRT60DecayTime(rv);
     }
     
     
     
-    void BM_CReverbInitDelayOutputSigns(struct BMCReverb* rv){
+    void BMCReverbInitDelayOutputSigns(struct BMCReverb* rv){
         // init delay output signs with an equal number of + and - for each channel
         float one = 1.0, negativeOne = -1.0;
         // left
@@ -319,24 +319,24 @@ extern "C" {
         vDSP_vfill(&negativeOne, rv->delayOutputSigns+3*rv->fourthNumDelays, 1, rv->fourthNumDelays);
         
         // randomise the order of the signs for each channel
-        UInt32 seed = 1;
+        unsigned int seed = 1;
         // left
-        BM_CReverbRandomiseOrder(rv->delayOutputSigns, seed, rv->halfNumDelays);
+        BMCReverbRandomiseOrder(rv->delayOutputSigns, seed, rv->halfNumDelays);
         //right
-        BM_CReverbRandomiseOrder(rv->delayOutputSigns+rv->halfNumDelays, seed, rv->halfNumDelays);
+        BMCReverbRandomiseOrder(rv->delayOutputSigns+rv->halfNumDelays, seed, rv->halfNumDelays);
     }
     
     
     
     
-    void BM_CReverbUpdateRT60DecayTime(struct BMCReverb* rv){
+    void BMCReverbUpdateRT60DecayTime(struct BMCReverb* rv){
         for (size_t i=0; i<rv->numDelays; i++){
             
             // set gain for normal operation
-            rv->decayGainAttenuation[i] = BM_CReverbDelayGainFromRT60(rv->rt60, rv->delayTimes[i]);
+            rv->decayGainAttenuation[i] = BMCReverbDelayGainFromRT60(rv->rt60, rv->delayTimes[i]);
             
             // set gain for when the hold pedal is down
-            rv->slowDecayGainAttenuation[i] = BM_CReverbDelayGainFromRT60(rv->slowDecayRT60, rv->delayTimes[i]);
+            rv->slowDecayGainAttenuation[i] = BMCReverbDelayGainFromRT60(rv->slowDecayRT60, rv->delayTimes[i]);
         }
     }
     
@@ -344,7 +344,7 @@ extern "C" {
     
     
     
-    void BM_CReverbSetSampleRate(struct BMCReverb* rv, float sampleRate){
+    void BMCReverbSetSampleRate(struct BMCReverb* rv, float sampleRate){
         rv->sampleRate = sampleRate;
         rv->settingsQueuedForUpdate = true;
     }
@@ -359,7 +359,7 @@ extern "C" {
     //
     // This formula comes from solving EQ 11.33 in DESIGNING AUDIO EFFECT PLUG-INS IN C++ by Will Pirkle
     // which is attributed to Jot, originally.
-    double BM_CReverbDelayGainFromRT60(double rt60, double delayTime){
+    double BMCReverbDelayGainFromRT60(double rt60, double delayTime){
         return pow(M_E, (-3.0 * delayTime) / rt60 );
     }
     
@@ -368,10 +368,10 @@ extern "C" {
     
     // sets the cutoff frequency of the high shelf filters that increase
     // the decay rate of high frequencies in the reverb.
-    void BM_CReverbSetHFDecayFC(struct BMCReverb* rv, float fc){
+    void BMCReverbSetHFDecayFC(struct BMCReverb* rv, float fc){
         assert(fc <= 18000.0 && fc > 100.0f);
         rv->highShelfFC = fc;
-        BM_CReverbUpdateDecayHighShelfFilters(rv);
+        BMCReverbUpdateDecayHighShelfFilters(rv);
     }
     
     
@@ -392,17 +392,17 @@ extern "C" {
     // the formulae for calculating the filter coefficients are from Digital Filters for Everyone,
     // second ed., by Rusty Alred.  Section 2.3.10: Shelf Filters
     //
-    void BM_CReverbSetHFDecayMultiplier(struct BMCReverb* rv, float multiplier){
+    void BMCReverbSetHFDecayMultiplier(struct BMCReverb* rv, float multiplier){
         assert(multiplier >= 1.0);
         rv->hfDecayMultiplier = multiplier;
-        BM_CReverbUpdateDecayHighShelfFilters(rv);
+        BMCReverbUpdateDecayHighShelfFilters(rv);
     }
     
     
     
     
     // updates the high shelf filters after a change in FC or gain
-    void BM_CReverbUpdateDecayHighShelfFilters(struct BMCReverb* rv){
+    void BMCReverbUpdateDecayHighShelfFilters(struct BMCReverb* rv){
         double g,D;
         double gamma;
         
@@ -429,10 +429,10 @@ extern "C" {
                 // set the filter gains
                 //
                 // here we find the gain already applied to each delay line
-                double broadbandGain = BM_CReverbDelayGainFromRT60(rv->rt60, rv->delayTimes[i]);
-                double desiredHFGain = BM_CReverbDelayGainFromRT60(rv->rt60 / rv->hfDecayMultiplier, rv->delayTimes[i]);
-                double broadbandSlowGain = BM_CReverbDelayGainFromRT60(rv->slowDecayRT60, rv->delayTimes[i]);
-                double desiredHFSlowGain = BM_CReverbDelayGainFromRT60(rv->slowDecayRT60 / rv->hfSlowDecayMultiplier, rv->delayTimes[i]);
+                double broadbandGain = BMCReverbDelayGainFromRT60(rv->rt60, rv->delayTimes[i]);
+                double desiredHFGain = BMCReverbDelayGainFromRT60(rv->rt60 / rv->hfDecayMultiplier, rv->delayTimes[i]);
+                double broadbandSlowGain = BMCReverbDelayGainFromRT60(rv->slowDecayRT60, rv->delayTimes[i]);
+                double desiredHFSlowGain = BMCReverbDelayGainFromRT60(rv->slowDecayRT60 / rv->hfSlowDecayMultiplier, rv->delayTimes[i]);
                 // and now find how much additional filter gain to apply for the given increase in HF decay speed
                 g = desiredHFGain / broadbandGain;
                 
@@ -461,7 +461,7 @@ extern "C" {
     
     
     // sets the length in seconds of the shortest delay in the network
-    void BM_CReverbSetPreDelay(struct BMCReverb* rv, float preDelay_seconds){
+    void BMCReverbSetPreDelay(struct BMCReverb* rv, float preDelay_seconds){
         assert(preDelay_seconds > 0.0 && preDelay_seconds < rv->maxDelay_seconds);
         rv->minDelay_seconds = preDelay_seconds;
         rv->settingsQueuedForUpdate = true;
@@ -472,7 +472,7 @@ extern "C" {
     
     
     // sets the length in seconds of the longest delay in the network
-    void BM_CReverbSetRoomSize(struct BMCReverb* rv, float roomSize_seconds){
+    void BMCReverbSetRoomSize(struct BMCReverb* rv, float roomSize_seconds){
         assert(roomSize_seconds > rv->minDelay_seconds);
         rv->maxDelay_seconds = roomSize_seconds;
         rv->settingsQueuedForUpdate = true;
@@ -482,7 +482,7 @@ extern "C" {
     
     
     // sets the amount of mixing between the two stereo channels
-    void BM_CReverbSetCrossStereoMix(struct BMCReverb* rv, float crossMix){
+    void BMCReverbSetCrossStereoMix(struct BMCReverb* rv, float crossMix){
         assert(crossMix >= 0 && crossMix <=1);
         
         // maximum mix setting is equal amounts of L and R in both channels
@@ -496,7 +496,7 @@ extern "C" {
     
     // wet and dry gain are balanced so that the total output level remains
     // constant as you as you adjust wet mix
-    void BM_CReverbSetWetGain(struct BMCReverb* rv, float wetGain){
+    void BMCReverbSetWetGain(struct BMCReverb* rv, float wetGain){
         assert(wetGain >=0.0 && wetGain <=1.0);
         rv->wetGain = wetGain;
         rv->dryGain = sqrt(1.0f - (wetGain*wetGain));
@@ -504,7 +504,7 @@ extern "C" {
     
     
     
-    inline void BM_CReverbIncrementIndices(struct BMCReverb* rv){
+    inline void BMCReverbIncrementIndices(struct BMCReverb* rv){
         // add one to each index
         for (size_t i=0; i<rv->numDelays; i++) rv->rwIndices[i]++;
         
@@ -535,7 +535,7 @@ extern "C" {
     
     
     // generate an evenly spaced but randomly jittered list of times between min and max
-    void BM_CReverbUpdateDelayTimes(struct BMCReverb* rv){
+    void BMCReverbUpdateDelayTimes(struct BMCReverb* rv){
         
         float spacing = (rv->maxDelay_seconds - rv->minDelay_seconds) / (float)rv->halfNumDelays;
         
@@ -556,9 +556,9 @@ extern "C" {
         
         // randomise the order of the list of delay times
         // left channel
-        BM_CReverbRandomiseOrder(rv->delayTimes, 17, rv->halfNumDelays);
+        BMCReverbRandomiseOrder(rv->delayTimes, 17, rv->halfNumDelays);
         // right channel
-        BM_CReverbRandomiseOrder(rv->delayTimes+rv->halfNumDelays, 4, rv->halfNumDelays);
+        BMCReverbRandomiseOrder(rv->delayTimes+rv->halfNumDelays, 4, rv->halfNumDelays);
         
         
         // convert times from milliseconds to samples and count the total
@@ -578,16 +578,16 @@ extern "C" {
         
         // The following depend on delay time and have to be updated
         // whenever there is a change
-        BM_CReverbUpdateRT60DecayTime(rv);
-        BM_CReverbUpdateDecayHighShelfFilters(rv);
-        BM_CReverbInitIndices(rv);
+        BMCReverbUpdateRT60DecayTime(rv);
+        BMCReverbUpdateDecayHighShelfFilters(rv);
+        BMCReverbInitIndices(rv);
     }
     
     
     
     
     
-    void BM_CReverbSetNumDelayUnits(struct BMCReverb* rv, size_t delayUnits){
+    void BMCReverbSetNumDelayUnits(struct BMCReverb* rv, size_t delayUnits){
         rv->newNumDelayUnits = delayUnits;
         rv->settingsQueuedForUpdate = true;
     }
@@ -596,7 +596,7 @@ extern "C" {
     
     
     
-    void BM_CReverbUpdateNumDelayUnits(struct BMCReverb* rv){
+    void BMCReverbUpdateNumDelayUnits(struct BMCReverb* rv){
         /*
          * before beginning, calculate some frequently reused values
          */
@@ -612,7 +612,7 @@ extern "C" {
         
         
         // free old memory if necessary
-        if (rv->bufferLengths) BM_CReverbFree(rv);
+        if (rv->bufferLengths) BMCReverbFree(rv);
         
         
         /*
@@ -636,16 +636,16 @@ extern "C" {
         rv->b1Slow = malloc(rv->numDelays*sizeof(float));
         rv->decayGainAttenuation = malloc(rv->numDelays*sizeof(float));
         rv->slowDecayGainAttenuation = malloc(rv->numDelays*sizeof(float));
-        rv->leftOutputTemp = malloc(BM_CREVERB_TEMPBUFFERLENGTH*sizeof(float));
-        rv->dryL = malloc(BM_CREVERB_TEMPBUFFERLENGTH*sizeof(float));
-        rv->dryR = malloc(BM_CREVERB_TEMPBUFFERLENGTH*sizeof(float));
+        rv->leftOutputTemp = malloc(BMCREVERB_TEMPBUFFERLENGTH*sizeof(float));
+        rv->dryL = malloc(BMCREVERB_TEMPBUFFERLENGTH*sizeof(float));
+        rv->dryR = malloc(BMCREVERB_TEMPBUFFERLENGTH*sizeof(float));
         rv->delayOutputSigns = malloc(rv->numDelays*sizeof(float));
         
         
         /*
          * set randomised signs for the output taps
          */
-        BM_CReverbInitDelayOutputSigns(rv);
+        BMCReverbInitDelayOutputSigns(rv);
         
         
         /*
@@ -666,7 +666,7 @@ extern "C" {
          * Allocate memory for the network delay buffers and update all the
          * delay-time-dependent parameters
          */
-        BM_CReverbUpdateDelayTimes(rv);
+        BMCReverbUpdateDelayTimes(rv);
         
         
         rv->settingsQueuedForUpdate = false;
@@ -675,7 +675,7 @@ extern "C" {
     
     
     // randomise the order of a list of floats
-    void BM_CReverbRandomiseOrder(float* list, uint seed, size_t length){
+    void BMCReverbRandomiseOrder(float* list, uint seed, size_t length){
         // seed the random number generator so we get the same result every time
         srand(seed);
         
@@ -691,7 +691,7 @@ extern "C" {
     
     
     
-    void BM_CReverbInitIndices(struct BMCReverb* rv){
+    void BMCReverbInitIndices(struct BMCReverb* rv){
         size_t idx = 0;
         rv->samplesTillNextWrap = SIZE_MAX;
         for (size_t i = 0; i<rv->numDelays; i++) {
@@ -714,7 +714,7 @@ extern "C" {
     
     
     
-    void BM_CReverbPointersToNull(struct BMCReverb* rv){
+    void BMCReverbPointersToNull(struct BMCReverb* rv){
         rv->delayLines = NULL;
         rv->bufferLengths = NULL;
         rv->feedbackBuffers = NULL;
@@ -742,7 +742,7 @@ extern "C" {
     
     
     
-    void BM_CReverbFree(struct BMCReverb* rv){
+    void BMCReverbFree(struct BMCReverb* rv){
         free(rv->delayLines);
         free(rv->bufferLengths);
         free(rv->feedbackBuffers);
@@ -766,7 +766,7 @@ extern "C" {
         free(rv->dryR);
         vDSP_biquadm_DestroySetup(rv->mainFilterSetup);
         
-        BM_CReverbPointersToNull(rv);
+        BMCReverbPointersToNull(rv);
     }
     
     
@@ -775,7 +775,7 @@ extern "C" {
     
     // process a single sample of input from right and left channels
     // the output is 100% wet
-    inline void BM_CReverbProcessWetSample(struct BMCReverb* rv, float inputL, float inputR, float* outputL, float* outputR){
+    inline void BMCReverbProcessWetSample(struct BMCReverb* rv, float inputL, float inputR, float* outputL, float* outputR){
         
         /*
          * mix feedback from previous sample with the fresh inputs
@@ -847,7 +847,7 @@ extern "C" {
         /*
          * increment delay indices
          */
-        BM_CReverbIncrementIndices(rv);
+        BMCReverbIncrementIndices(rv);
         
         
         

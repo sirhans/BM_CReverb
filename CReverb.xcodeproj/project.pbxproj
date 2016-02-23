@@ -7,8 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3A0D97361C7C24E30009FEB2 /* BMCrossPlatformVDSP.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A0D97341C7C24E30009FEB2 /* BMCrossPlatformVDSP.c */; };
 		3A8E384F1C66EE8F006406DA /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A8E384E1C66EE8F006406DA /* main.c */; };
-		3A8E38571C66EEBA006406DA /* BM_CReverb.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A8E38551C66EEBA006406DA /* BM_CReverb.c */; };
+		3A8E38571C66EEBA006406DA /* BMCReverb.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A8E38551C66EEBA006406DA /* BMCReverb.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -24,10 +25,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		3A0D97341C7C24E30009FEB2 /* BMCrossPlatformVDSP.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = BMCrossPlatformVDSP.c; sourceTree = "<group>"; };
+		3A0D97351C7C24E30009FEB2 /* BMCrossPlatformVDSP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BMCrossPlatformVDSP.h; sourceTree = "<group>"; };
 		3A8E384B1C66EE8F006406DA /* CReverb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CReverb; sourceTree = BUILT_PRODUCTS_DIR; };
 		3A8E384E1C66EE8F006406DA /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
-		3A8E38551C66EEBA006406DA /* BM_CReverb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = BM_CReverb.c; sourceTree = "<group>"; };
-		3A8E38561C66EEBA006406DA /* BM_CReverb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BM_CReverb.h; sourceTree = "<group>"; };
+		3A8E38551C66EEBA006406DA /* BMCReverb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = BMCReverb.c; sourceTree = "<group>"; };
+		3A8E38561C66EEBA006406DA /* BMCReverb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BMCReverb.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,8 +64,10 @@
 			isa = PBXGroup;
 			children = (
 				3A8E384E1C66EE8F006406DA /* main.c */,
-				3A8E38551C66EEBA006406DA /* BM_CReverb.c */,
-				3A8E38561C66EEBA006406DA /* BM_CReverb.h */,
+				3A8E38551C66EEBA006406DA /* BMCReverb.c */,
+				3A8E38561C66EEBA006406DA /* BMCReverb.h */,
+				3A0D97341C7C24E30009FEB2 /* BMCrossPlatformVDSP.c */,
+				3A0D97351C7C24E30009FEB2 /* BMCrossPlatformVDSP.h */,
 			);
 			path = CReverb;
 			sourceTree = "<group>";
@@ -123,7 +128,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3A8E38571C66EEBA006406DA /* BM_CReverb.c in Sources */,
+				3A8E38571C66EEBA006406DA /* BMCReverb.c in Sources */,
+				3A0D97361C7C24E30009FEB2 /* BMCrossPlatformVDSP.c in Sources */,
 				3A8E384F1C66EE8F006406DA /* main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

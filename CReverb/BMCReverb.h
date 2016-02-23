@@ -9,11 +9,11 @@
 #ifndef BMCReverb_h
 #define BMCReverb_h
 
-//#ifdef __APPLE__
+#ifdef __APPLE__
     #include <Accelerate/Accelerate.h>
-//#else
-//    #include "BMCrossPlatformVDSP.h"
-//#endif
+#else
+    #include "BMCrossPlatformVDSP.h"
+#endif
 
 // default settings
 #define BMCREVERB_WETMIX 0.15 // dryMix = sqrt(1 - wetMix^2)
@@ -35,7 +35,7 @@ extern "C" {
 #endif
     
     // the CReverb struct
-  struct BMCReverb {
+    typedef struct BMCReverb {
         float *delayLines, *feedbackBuffers, *mixingBuffers, *fb0, *fb1, *fb2, *fb3, *mb0, *mb1, *mb2, *mb3, *z1, *a1, *b0, *b1, *a1Slow, *b0Slow, *b1Slow, *delayTimes, *decayGainAttenuation, *slowDecayGainAttenuation, *leftOutputTemp, *delayOutputSigns, *dryL, *dryR;
         size_t *bufferLengths, *bufferStartIndices, *bufferEndIndices, *rwIndices;
         float minDelay_seconds, maxDelay_seconds, sampleRate, wetGain, dryGain, inputAttenuation, matrixAttenuation, straightStereoMix, crossStereoMix, hfDecayMultiplier, hfSlowDecayMultiplier, highShelfFC, rt60, slowDecayRT60, highpassFC, lowpassFC;
@@ -44,7 +44,7 @@ extern "C" {
         vDSP_biquadm_Setup mainFilterSetup;
         double mainFilterCoefficients[5*2*2], *fcChLSec0, *fcChRSec0, *fcChLSec1, *fcChRSec1;
         bool slowDecay, settingsQueuedForUpdate, autoSustain;
-    } ;
+    } BMCReverb;
     
     
     
