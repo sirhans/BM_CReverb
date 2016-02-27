@@ -9,6 +9,8 @@
 #ifndef BMCReverb_h
 #define BMCReverb_h
 
+#include <stdio.h>
+
 #ifdef __APPLE__
     #include <Accelerate/Accelerate.h>
 #else

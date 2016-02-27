@@ -8,7 +8,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "BMCReverb.h"
+
 
 #define TESTBUFFERLENGTH 128
 
@@ -52,8 +54,8 @@ int main(int argc, const char * argv[]) {
     
     
     // process the first frame twice (the first time to trigger an update)
-    BM_CReverbProcessBuffer(&rv, testBufferInL, testBufferInR, testBufferOutL, testBufferOutR, TESTBUFFERLENGTH);
-    //BM_CReverbProcessBuffer(&rv, testBufferInL, testBufferInR, testBufferOutL, testBufferOutR, TESTBUFFERLENGTH);
+    BMCReverbProcessBuffer(&rv, testBufferInL, testBufferInR, testBufferOutL, testBufferOutR, TESTBUFFERLENGTH);
+    BMCReverbProcessBuffer(&rv, testBufferInL, testBufferInR, testBufferOutL, testBufferOutR, TESTBUFFERLENGTH);
     
     // print out the entire frame in .csv format
     for (size_t i=0; i<TESTBUFFERLENGTH; i++) {
@@ -63,17 +65,31 @@ int main(int argc, const char * argv[]) {
     // set the input buffers to all zeros (only the first value was non-zero)
     testBufferInL[0] = testBufferInR[0] = 0.0;
     
+    
+    // start a timer
+    clock_t begin, end;
+    double time_spent;
+    begin = clock();
+    
+    
     // process and print more frames
-    size_t numFramesToPrint = 1500;
+    size_t numFramesToPrint = 15000;
     while (numFramesToPrint-- != 0) {
         // turn the hold pedal on
-        if (numFramesToPrint < 1400) BM_CReverbSetSlowDecayState(&rv, true);
+        if (numFramesToPrint < 1400) BMCReverbSetSlowDecayState(&rv, true);
         // turn it back off
-        if (numFramesToPrint < 500) BM_CReverbSetSlowDecayState(&rv, false);
-        BM_CReverbProcessBuffer(&rv, testBufferInL, testBufferInR, testBufferOutL, testBufferOutR, TESTBUFFERLENGTH);
-        for (size_t i = 0; i<TESTBUFFERLENGTH; i++)
-            fprintf(audioFile, "%f,%f\n", testBufferOutL[i], testBufferOutR[i]);
+        if (numFramesToPrint < 500) BMCReverbSetSlowDecayState(&rv, false);
+        BMCReverbProcessBuffer(&rv, testBufferInL, testBufferInR, testBufferOutL, testBufferOutR, TESTBUFFERLENGTH);
+        //for (size_t i = 0; i<TESTBUFFERLENGTH; i++)
+        //    fprintf(audioFile, "%f,%f\n", testBufferOutL[i], testBufferOutR[i]);
     }
+    
+    
+    // print the time taken to process reverb
+    end = clock();
+    time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("time: %f\n", time_spent);
+    
     
     fclose(audioFile);
     return 0;

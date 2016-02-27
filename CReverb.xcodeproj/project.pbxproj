@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		3A0D97361C7C24E30009FEB2 /* BMCrossPlatformVDSP.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A0D97341C7C24E30009FEB2 /* BMCrossPlatformVDSP.c */; };
+		3A7B49681C8145E800BD6010 /* BMCrossPlatformVDSP.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A7B49671C8145E800BD6010 /* BMCrossPlatformVDSP.c */; };
 		3A8E384F1C66EE8F006406DA /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A8E384E1C66EE8F006406DA /* main.c */; };
 		3A8E38571C66EEBA006406DA /* BMCReverb.c in Sources */ = {isa = PBXBuildFile; fileRef = 3A8E38551C66EEBA006406DA /* BMCReverb.c */; };
 /* End PBXBuildFile section */
@@ -25,8 +25,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		3A0D97341C7C24E30009FEB2 /* BMCrossPlatformVDSP.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = BMCrossPlatformVDSP.c; sourceTree = "<group>"; };
 		3A0D97351C7C24E30009FEB2 /* BMCrossPlatformVDSP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BMCrossPlatformVDSP.h; sourceTree = "<group>"; };
+		3A7B49671C8145E800BD6010 /* BMCrossPlatformVDSP.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = BMCrossPlatformVDSP.c; sourceTree = "<group>"; };
 		3A8E384B1C66EE8F006406DA /* CReverb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CReverb; sourceTree = BUILT_PRODUCTS_DIR; };
 		3A8E384E1C66EE8F006406DA /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		3A8E38551C66EEBA006406DA /* BMCReverb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = BMCReverb.c; sourceTree = "<group>"; };
@@ -66,8 +66,8 @@
 				3A8E384E1C66EE8F006406DA /* main.c */,
 				3A8E38551C66EEBA006406DA /* BMCReverb.c */,
 				3A8E38561C66EEBA006406DA /* BMCReverb.h */,
-				3A0D97341C7C24E30009FEB2 /* BMCrossPlatformVDSP.c */,
 				3A0D97351C7C24E30009FEB2 /* BMCrossPlatformVDSP.h */,
+				3A7B49671C8145E800BD6010 /* BMCrossPlatformVDSP.c */,
 			);
 			path = CReverb;
 			sourceTree = "<group>";
@@ -129,7 +129,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3A8E38571C66EEBA006406DA /* BMCReverb.c in Sources */,
-				3A0D97361C7C24E30009FEB2 /* BMCrossPlatformVDSP.c in Sources */,
+				3A7B49681C8145E800BD6010 /* BMCrossPlatformVDSP.c in Sources */,
 				3A8E384F1C66EE8F006406DA /* main.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -226,6 +226,12 @@
 		3A8E38541C66EE8F006406DA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_DYNAMIC_NO_PIC = YES;
+				GCC_FAST_MATH = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_OPTIMIZATION_LEVEL = fast;
+				GCC_UNROLL_LOOPS = YES;
+				LLVM_LTO = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
