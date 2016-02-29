@@ -18,11 +18,12 @@
 #define BMCrossPlatformVDSP_h
 
 #include <stdio.h>
-#include <Stdbool.h>
+#include <stdbool.h>
 #include <string.h>
 #include <math.h>
 
 
+#ifdef __APPLE__
 // copied from vDSP.h
 // this code removes annoying xcode compiler warnings about
 // required nullability specifers on pointers
@@ -35,24 +36,26 @@
 #define __nullable
 #define __nonnull
 #endif
+#endif       
+    
 
 
 typedef struct vDSP_biquadm_SetupStruct  *vDSP_biquadm_Setup;
 
 // not implemented yet
-static inline void vDSP_biquadm_DestroySetup(vDSP_biquadm_Setup setup){
+static __inline void vDSP_biquadm_DestroySetup(vDSP_biquadm_Setup setup){
     return;
 }
 
 // not implemented yet
-static inline vDSP_biquadm_Setup vDSP_biquadm_CreateSetup(const double* coefficients, size_t numChannels, size_t numLevels){
+static __inline vDSP_biquadm_Setup vDSP_biquadm_CreateSetup(const double* coefficients, size_t numChannels, size_t numLevels){
     vDSP_biquadm_Setup foo;
     return foo;
 }
 
 
 // not implemented yet
-static inline void vDSP_biquadm(vDSP_biquadm_Setup setup, const float* _Nonnull * _Nonnull input, size_t inputStride, float* _Nonnull * _Nonnull output, size_t outputStride, size_t count){
+static __inline void vDSP_biquadm(vDSP_biquadm_Setup setup, const float* input, size_t inputStride, float**  output, size_t outputStride, size_t count){
     return;
 }
 
@@ -62,7 +65,7 @@ static inline void vDSP_biquadm(vDSP_biquadm_Setup setup, const float* _Nonnull 
 // Astride is the stride for A
 // result is a pointer to a floating point value for output
 // count is the number of elements in A to process
-static inline void vDSP_svesq(const float* A, size_t Astride, float* result, size_t count){
+static __inline void vDSP_svesq(const float* A, size_t Astride, float* result, size_t count){
     *result = 0;
     
     // if stride is 1
@@ -82,7 +85,7 @@ static inline void vDSP_svesq(const float* A, size_t Astride, float* result, siz
 // scalar multiply, scalar multiply, and add
 //
 // result[i] = b*A[i] + d*C[i];
-static inline void vDSP_vsmsma(const float* A, size_t Astride, const float* b, const float* C, size_t Cstride, const float* d, float* result, size_t resultStride, size_t count){
+static __inline void vDSP_vsmsma(const float* A, size_t Astride, const float* b, const float* C, size_t Cstride, const float* d, float* result, size_t resultStride, size_t count){
     
     // if all strides are 1
     if(Astride*Cstride*resultStride == 1)
@@ -107,7 +110,7 @@ static inline void vDSP_vsmsma(const float* A, size_t Astride, const float* b, c
 
 
 // fill destination with value
-static inline void vDSP_vfill(float* value, float* destination, size_t destinationStride, size_t count){
+static __inline void vDSP_vfill(float* value, float* destination, size_t destinationStride, size_t count){
     // if stride is 1
     if (destinationStride == 1)
         for (size_t i=0; i<count; i++)
@@ -125,7 +128,7 @@ static inline void vDSP_vfill(float* value, float* destination, size_t destinati
 
 // create an arithmetic sequence
 // destination[i] = i*interval + startVal;
-static inline void vDSP_vramp(const float* startVal, const float* interval, float* destination, size_t destinationStride, size_t count){
+static __inline void vDSP_vramp(const float* startVal, const float* interval, float* destination, size_t destinationStride, size_t count){
     size_t i=0;
     float floatI = 0.0;
     while (count-- > 0) {
@@ -138,7 +141,7 @@ static inline void vDSP_vramp(const float* startVal, const float* interval, floa
 
 // vector, scalar addition
 // C[i] = A[i] + b;
-static inline void vDSP_vsadd(const float* A, size_t Astride, const float* b, float* C, size_t Cstride, size_t count){
+static __inline void vDSP_vsadd(const float* A, size_t Astride, const float* b, float* C, size_t Cstride, size_t count){
     // if all strides are 1
     if (Astride*Cstride == 1)
         for (size_t i=0; i<count; i++)
@@ -159,7 +162,7 @@ static inline void vDSP_vsadd(const float* A, size_t Astride, const float* b, fl
 
 // vector, vector multiplication
 // C[i] = A[i] * B[i];
-static inline void vDSP_vmul(const float* A, size_t Astride, const float* B, size_t Bstride,  float* C, size_t Cstride, size_t count){
+static __inline void vDSP_vmul(const float* A, size_t Astride, const float* B, size_t Bstride, float* C, size_t Cstride, size_t count){
     // if all strides are 1
     if(Astride*Bstride*Cstride == 1)
         for (size_t i=0; i<count; i++)
@@ -181,7 +184,7 @@ static inline void vDSP_vmul(const float* A, size_t Astride, const float* B, siz
 
 // vector multiply and add
 // D[i] = A[i]*B[i] + C[i];
-static inline void vDSP_vma(const float* A, size_t Astride, const float* B, size_t Bstride, const float* C, size_t Cstride, float* D, size_t Dstride, size_t count){
+static __inline void vDSP_vma(const float* A, size_t Astride, const float* B, size_t Bstride, const float* C, size_t Cstride, float* D, size_t Dstride, size_t count){
     // if all strides are 1
     if(Astride*Bstride*Cstride*Dstride == 1)
         for (size_t i=0; i<count; i++)
@@ -204,7 +207,7 @@ static inline void vDSP_vma(const float* A, size_t Astride, const float* B, size
 
 // vector clear
 // A[i]=0
-static inline void vDSP_vclr(float* A, size_t Astride, size_t count){
+static __inline void vDSP_vclr(float* A, size_t Astride, size_t count){
     // if stride is 1
     if(Astride==1) memset(A,0,sizeof(float)*count);
     
@@ -220,7 +223,7 @@ static inline void vDSP_vclr(float* A, size_t Astride, size_t count){
 
 // vector multiply, vector multiply, and add
 // E[i] = A[i]*B[i] + C[i]*D[i]
-static inline void vDSP_vmma(const float* A, size_t Astride, const float* B, size_t Bstride, const float* C, size_t Cstride, const float* D, size_t Dstride, float* E, size_t Estride, size_t count){
+static __inline void vDSP_vmma(const float* A, size_t Astride, const float* B, size_t Bstride, const float* C, size_t Cstride, const float* D, size_t Dstride, float* E, size_t Estride, size_t count){
     // if all strides are 1
     if(Astride*Bstride*Cstride*Dstride*Estride == 1)
         for (size_t i=0; i<count; i++)
@@ -246,7 +249,7 @@ static inline void vDSP_vmma(const float* A, size_t Astride, const float* B, siz
 
 // vector sum
 // *result = total(A)
-static inline void vDSP_sve(const float* A, size_t Astride, float* result, size_t count){
+static __inline void vDSP_sve(const float* A, size_t Astride, float* result, size_t count){
     *result = 0;
     
     if (Astride==1) {
@@ -263,7 +266,7 @@ static inline void vDSP_sve(const float* A, size_t Astride, float* result, size_
 
 // batch copy from vector of array indices
 // B[i] = A[AIDX[i]-1];
-static inline void vDSP_vgathr(const float* A, const size_t* AIDX, size_t AIDXstride, float* B, size_t Bstride, size_t count){
+static __inline void vDSP_vgathr(const float* A, const size_t* AIDX, size_t AIDXstride, float* B, size_t Bstride, size_t count){
     // the apple definition of this function indexes the array starting at 1, not 0
     const float* Azero = A - 1;
     
@@ -288,7 +291,7 @@ static inline void vDSP_vgathr(const float* A, const size_t* AIDX, size_t AIDXst
 
 // vector,vector add
 // C[i] = A[i] + B[i];
-static inline void vDSP_vadd(const float* A, size_t Astride, const float* B, size_t Bstride,  float* C, size_t Cstride, size_t count){
+static __inline void vDSP_vadd(const float* A, size_t Astride, const float* B, size_t Bstride, float* C, size_t Cstride, size_t count){
     // if all strides are 1
     if (Astride*Bstride*Cstride==1)
         for (size_t i=0; i<count; i++)
@@ -311,7 +314,7 @@ static inline void vDSP_vadd(const float* A, size_t Astride, const float* B, siz
 
 // vector,vector subtract
 // C[i] = A[i] - B[i];
-static inline void vDSP_vsub(const float* A, size_t Astride, const float* B, size_t Bstride,  float* C, size_t Cstride, size_t count){
+static __inline void vDSP_vsub(const float* A, size_t Astride, const float* B, size_t Bstride, float* C, size_t Cstride, size_t count){
     // if all strides are 1
     if (Astride*Bstride*Cstride==1)
         for (size_t i=0; i<count; i++)
@@ -334,7 +337,7 @@ static inline void vDSP_vsub(const float* A, size_t Astride, const float* B, siz
 
 // vector, scalar multiply
 // C[i] = A[i] * b
-static inline void vDSP_vsmul(const float* A, size_t Astride, const float* b, float* C, size_t Cstride, size_t count){
+static __inline void vDSP_vsmul(const float* A, size_t Astride, const float* b, float* C, size_t Cstride, size_t count){
     // if all strides are 1
     if (Astride*Cstride == 1)
         for (size_t i=0; i<count; i++)
@@ -353,9 +356,10 @@ static inline void vDSP_vsmul(const float* A, size_t Astride, const float* b, fl
 
 
 
-
+#ifdef __APPLE__
 #if __has_feature(assume_nonnull)
 _Pragma("clang assume_nonnull end")
+#endif
 #endif
 
 #endif /* BMCrossPlatformVDSP_h */

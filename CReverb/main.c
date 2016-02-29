@@ -18,7 +18,7 @@ int main(int argc, const char * argv[]) {
     
     // open a file for writing
     FILE* audioFile;
-    audioFile = fopen("/Users/hans/Documents/MATLAB/rvImpulse.csv", "w+");
+    audioFile = fopen("./rvImpulse.csv", "w+");
     
     
     // initialize the reverb

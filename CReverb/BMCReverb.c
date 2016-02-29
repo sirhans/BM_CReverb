@@ -10,6 +10,9 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <math.h>
 
 
 #ifdef __cplusplus
@@ -22,6 +25,19 @@ extern "C" {
 #define BM_MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 #define BM_MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
     
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+#ifndef M_E
+#define M_E 2.71828182845904523536
+#endif
+
+#ifndef M_SQRT2
+#define M_SQRT2 1.41421356237309504880
+#endif
+
     
     /*
      * these functions should be called only from functions within this file
@@ -35,7 +51,7 @@ extern "C" {
     void BMCReverbProcessWetSample(struct BMCReverb* rv, float inputL, float inputR, float* outputL, float* outputR);
     void BMCReverbUpdateNumDelayUnits(struct BMCReverb* rv);
     void BMCReverbPointersToNull(struct BMCReverb* rv);
-    void BMCReverbRandomiseOrder(float* list, uint seed, size_t length);
+    void BMCReverbRandomiseOrder(float* list, size_t seed, size_t length);
     void BMCReverbInitDelayOutputSigns(struct BMCReverb* rv);
     void BMCReverbUpdateMainFilter(struct BMCReverb* rv);
     void BMCReverbUpdateSettings(struct BMCReverb* rv);
@@ -504,7 +520,7 @@ extern "C" {
     
     
     
-    inline void BMCReverbIncrementIndices(struct BMCReverb* rv){
+	__inline void BMCReverbIncrementIndices(struct BMCReverb* rv){
         // add one to each index
         for (size_t i=0; i<rv->numDelays; i++) rv->rwIndices[i]++;
         
@@ -675,9 +691,9 @@ extern "C" {
     
     
     // randomise the order of a list of floats
-    void BMCReverbRandomiseOrder(float* list, uint seed, size_t length){
+    void BMCReverbRandomiseOrder(float* list, size_t seed, size_t length){
         // seed the random number generator so we get the same result every time
-        srand(seed);
+        srand((int)seed);
         
         for (int i = 0; i<length; i++) {
             int j = rand() % (int)length;
@@ -775,7 +791,7 @@ extern "C" {
     
     // process a single sample of input from right and left channels
     // the output is 100% wet
-    inline void BMCReverbProcessWetSample(struct BMCReverb* rv, float inputL, float inputR, float* outputL, float* outputR){
+	__inline void BMCReverbProcessWetSample(struct BMCReverb* rv, float inputL, float inputR, float* outputL, float* outputR){
         
         /*
          * mix feedback from previous sample with the fresh inputs
