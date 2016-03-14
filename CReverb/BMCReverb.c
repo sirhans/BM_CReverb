@@ -104,7 +104,7 @@ extern "C" {
     
     
     /*
-     * works in place AND allows left and right inputs to point to
+     * works in place and allows left and right inputs to point to
      * the same data for mono to stereo operation
      */
     void BMCReverbProcessBuffer(struct BMCReverb* rv, const float* inputL, const float* inputR, float* outputL, float* outputR, size_t numSamples){
@@ -183,7 +183,7 @@ extern "C" {
         rv->twoChannelFilterData[0] = outputL;
         rv->twoChannelFilterData[1] = outputR;
         // apply a multilevel biquad filter to both channels
-        //vDSP_biquadm(rv->mainFilterSetup, (const float* _Nonnull * _Nonnull)rv->twoChannelFilterData, 1, rv->twoChannelFilterData, 1, numSamples);
+        vDSP_biquadm(rv->mainFilterSetup, (const float* _Nonnull * _Nonnull)rv->twoChannelFilterData, 1, rv->twoChannelFilterData, 1, numSamples);
         
         
         
