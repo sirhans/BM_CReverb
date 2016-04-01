@@ -70,8 +70,8 @@ extern "C" {
         
         // create pointers to the various filter sections
         rv->fcChLSec0 = rv->mainFilterCoefficients + 0*2*5 + 0*5;
-        rv->fcChLSec1 = rv->mainFilterCoefficients + 0*2*5 + 1*5;
-        rv->fcChRSec0 = rv->mainFilterCoefficients + 1*2*5 + 0*5;
+        rv->fcChLSec1 = rv->mainFilterCoefficients + 1*2*5 + 0*5;
+        rv->fcChRSec0 = rv->mainFilterCoefficients + 0*2*5 + 1*5;
         rv->fcChRSec1 = rv->mainFilterCoefficients + 1*2*5 + 1*5;
         
         // initialize default settings
