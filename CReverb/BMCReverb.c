@@ -95,9 +95,11 @@ extern "C" {
         BMCReverbSetWetGain(rv, BMCREVERB_WETMIX);
         BMCReverbSetCrossStereoMix(rv, BMCREVERB_CROSSSTEREOMIX);
         
+        // initialize the filter setup
+        rv->mainFilterSetup = vDSP_biquadm_CreateSetup(rv->mainFilterCoefficients, 2, 2);
         
         // initialize all the delays and delay-dependent settings
-        BMCReverbUpdateSettings(rv);
+        BMCReverbUpdateNumDelayUnits(rv);
     }
     
     

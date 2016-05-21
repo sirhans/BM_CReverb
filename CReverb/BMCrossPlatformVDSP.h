@@ -21,6 +21,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
+#include <stdlib.h>
+#include <assert.h>
 
 
 #ifdef __APPLE__
@@ -37,27 +39,146 @@
 #define __nonnull
 #endif
 #endif       
-    
 
 
-typedef struct vDSP_biquadm_SetupStruct  *vDSP_biquadm_Setup;
+/*************************************************************************
+ * The code in this file implements the functions in Apple's
+ * vDSP library.  See the Apple reference page for documentation.
+ * https://developer.apple.com/library/mac/documentation/Accelerate/Reference/vDSPRef/
+ *
+ ************************************************************************/
 
-// not implemented yet
+
+
+/**************************************
+ *  biquadm implementation functions  *
+ **************************************/
+
+typedef struct singleBiquadVariables {
+    float b0,b1,b2,a1,a2,zb1,zb2,za1,za2;
+}singleBiquadVariables;
+
+
+
+
+typedef struct vDSP_biquadm_SetupStruct {
+    singleBiquadVariables* filters;
+    size_t numChannels, numLevels;
+}*vDSP_biquadm_Setup;
+
+
+
+/*
+ * Here we re-declare the same setup as above just so that
+ * we have the size of it to use in the sizeof function when
+ * we allocate memory for it.
+ */
+typedef struct dummySetupStruct {
+    singleBiquadVariables* filters;
+    size_t numChannels, numLevels;
+}dummySetupStructSize;
+
+
+
+
+
 static __inline void vDSP_biquadm_DestroySetup(vDSP_biquadm_Setup setup){
+    free(setup->filters);
+    setup->filters = NULL;
+    free(setup);
+    setup = NULL;
     return;
 }
 
-// not implemented yet
-static __inline vDSP_biquadm_Setup vDSP_biquadm_CreateSetup(const double* coefficients, size_t numChannels, size_t numLevels){
-    vDSP_biquadm_Setup foo;
-    return foo;
+
+
+
+
+/*
+ *  You must call this function before using the filter
+ */
+static __inline vDSP_biquadm_Setup vDSP_biquadm_CreateSetup(const double* coefficients,
+                                                            size_t numChannels,
+                                                            size_t numLevels)
+{
+    vDSP_biquadm_Setup setup = malloc(sizeof(dummySetupStructSize));
+    setup->filters = malloc(numChannels*numLevels*sizeof(singleBiquadVariables));
+    
+    for (size_t i=0; i < numLevels; i++){
+        for (size_t j=0; j < numChannels; j++){
+            setup->filters[i*numChannels + j].b0 = coefficients[i*numChannels*5+j*5+0];
+            setup->filters[i*numChannels + j].b1 = coefficients[i*numChannels*5+j*5+1];
+            setup->filters[i*numChannels + j].b2 = coefficients[i*numChannels*5+j*5+2];
+            setup->filters[i*numChannels + j].a1 = coefficients[i*numChannels*5+j*5+3];
+            setup->filters[i*numChannels + j].a2 = coefficients[i*numChannels*5+j*5+4];
+            setup->filters[i*numChannels + j].za1 = 0;
+            setup->filters[i*numChannels + j].za2 = 0;
+            setup->filters[i*numChannels + j].zb1 = 0;
+            setup->filters[i*numChannels + j].zb2 = 0;
+        }
+    }
+    
+    setup->numChannels = numChannels;
+    setup->numLevels = numLevels;
+
+    return setup;
 }
 
 
-// not implemented yet
-static __inline void vDSP_biquadm(vDSP_biquadm_Setup setup, const float* input, size_t inputStride, float**  output, size_t outputStride, size_t count){
-    return;
+
+
+
+
+static __inline void vDSP_biquadm(vDSP_biquadm_Setup setup,
+                                  const float** input,
+                                  size_t inputStride,
+                                  float**  output,
+                                  size_t outputStride,
+                                  size_t count)
+{
+        assert (inputStride * outputStride == 1) ;
+        for(size_t i=0; i< count; i++)
+        {
+            for(size_t j=0; j< setup->numChannels; j++)
+                 {
+                     for(size_t k=0; k < setup->numLevels; k++)
+                         {
+                             // y[n] = x[n]*b0 + zb1*b1 + zb2*b2 - za1*a1 - za2*a2
+                             output[0][i] = input[0][i] * setup->filters[j+k*(setup->numChannels)].b0 +
+                             setup->filters[j+k*(setup->numChannels)].zb1 *setup->filters[j+k*(setup->numChannels)].b1 +
+                             setup->filters[j+k*(setup->numChannels)].zb2 *setup->filters[j+k*(setup->numChannels)].b2  -
+                             setup->filters[j+k*(setup->numChannels)].za1 * setup->filters[j+k*(setup->numChannels)].a1 -
+                             setup->filters[j+k*(setup->numChannels)].za2 *setup->filters[j+k*(setup->numChannels)].a2;
+                             
+                             // zb2 = zb1
+                             setup->filters[j+k*(setup->numChannels)].zb2 = setup->filters[j+k*(setup->numChannels)].zb1;
+                             
+                             // zb1 = x[n]
+                             setup->filters[j+k*(setup->numChannels)].zb1 = input[0][i];
+                             
+                             // za2 = za1
+                             setup->filters[j+k*(setup->numChannels)].za2 = setup->filters[j+k*(setup->numChannels)].za1;
+                             
+                             // za1 = y[n]
+                             setup->filters[j+k*(setup->numChannels)].za1 = output[0][i];
+                            }
+            
+                    }
+        }
+    
+        return;
 }
+
+
+
+
+
+
+
+/**********************************
+ *  Vector mathematics functions  *
+ **********************************/
+
 
 // square and sum elements of A into B.
 //
@@ -80,6 +201,8 @@ static __inline void vDSP_svesq(const float* A, size_t Astride, float* result, s
             *result += A[i]*A[i];
     }
 }
+
+
 
 
 // scalar multiply, scalar multiply, and add
@@ -109,6 +232,8 @@ static __inline void vDSP_vsmsma(const float* A, size_t Astride, const float* b,
 }
 
 
+
+
 // fill destination with value
 static __inline void vDSP_vfill(float* value, float* destination, size_t destinationStride, size_t count){
     // if stride is 1
@@ -126,6 +251,9 @@ static __inline void vDSP_vfill(float* value, float* destination, size_t destina
     }
 }
 
+
+
+
 // create an arithmetic sequence
 // destination[i] = i*interval + startVal;
 static __inline void vDSP_vramp(const float* startVal, const float* interval, float* destination, size_t destinationStride, size_t count){
@@ -137,6 +265,8 @@ static __inline void vDSP_vramp(const float* startVal, const float* interval, fl
         floatI++;
     }
 }
+
+
 
 
 // vector, scalar addition
@@ -157,6 +287,8 @@ static __inline void vDSP_vsadd(const float* A, size_t Astride, const float* b, 
         }
     }
 }
+
+
 
 
 
@@ -202,6 +334,7 @@ static __inline void vDSP_vma(const float* A, size_t Astride, const float* B, si
         }
     }
 }
+
 
 
 

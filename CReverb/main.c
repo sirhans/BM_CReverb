@@ -20,6 +20,8 @@ int main(int argc, const char * argv[]) {
     FILE* audioFile;
     audioFile = fopen("./rvImpulse.csv", "w+");
     
+    system("pwd\n");
+    
     
     // initialize the reverb
     struct BMCReverb rv;
@@ -73,15 +75,15 @@ int main(int argc, const char * argv[]) {
     
     
     // process and print more frames
-    size_t numFramesToPrint = 15000;
+    size_t numFramesToPrint = 100*44100/128;
     while (numFramesToPrint-- != 0) {
         // turn the hold pedal on
         if (numFramesToPrint < 1400) BMCReverbSetSlowDecayState(&rv, true);
         // turn it back off
         if (numFramesToPrint < 500) BMCReverbSetSlowDecayState(&rv, false);
         BMCReverbProcessBuffer(&rv, testBufferInL, testBufferInR, testBufferOutL, testBufferOutR, TESTBUFFERLENGTH);
-        //for (size_t i = 0; i<TESTBUFFERLENGTH; i++)
-        //    fprintf(audioFile, "%f,%f\n", testBufferOutL[i], testBufferOutR[i]);
+        for (size_t i = 0; i<TESTBUFFERLENGTH; i++)
+            fprintf(audioFile, "%f,%f\n", testBufferOutL[i], testBufferOutR[i]);
     }
     
     
