@@ -141,10 +141,29 @@ static __inline void vDSP_biquadm(vDSP_biquadm_Setup setup,
         {
             for(size_t j=0; j< setup->numChannels; j++)
                  {
-                     for(size_t k=0; k < setup->numLevels; k++)
+                     // y[n] = x[n]*b0 + zb1*b1 + zb2*b2 - za1*a1 - za2*a2
+                             output[0][i] = input[0][i] * setup->filters[j+0*(setup->numChannels)].b0 +
+                             setup->filters[j+0*(setup->numChannels)].zb1 *setup->filters[j+0*(setup->numChannels)].b1 +
+                             setup->filters[j+0*(setup->numChannels)].zb2 *setup->filters[j+0*(setup->numChannels)].b2  -
+                             setup->filters[j+0*(setup->numChannels)].za1 * setup->filters[j+0*(setup->numChannels)].a1 -
+                             setup->filters[j+0*(setup->numChannels)].za2 *setup->filters[j+0*(setup->numChannels)].a2;
+                             
+                             // zb2 = zb1
+                             setup->filters[j+0*(setup->numChannels)].zb2 = setup->filters[j+0*(setup->numChannels)].zb1;
+                             
+                             // zb1 = x[n]
+                             setup->filters[j+0*(setup->numChannels)].zb1 = input[0][i];
+                             
+                             // za2 = za1
+                             setup->filters[j+0*(setup->numChannels)].za2 = setup->filters[j+0*(setup->numChannels)].za1;
+                             
+                             // za1 = y[n]
+                             setup->filters[j+0*(setup->numChannels)].za1 = output[0][i];
+                     for(size_t k=1; k < setup->numLevels; k++)
                          {
                              // y[n] = x[n]*b0 + zb1*b1 + zb2*b2 - za1*a1 - za2*a2
-                             output[0][i] = input[0][i] * setup->filters[j+k*(setup->numChannels)].b0 +
+                            float x= output[0][i];
+                             output[0][i] = x * setup->filters[j+k*(setup->numChannels)].b0 +
                              setup->filters[j+k*(setup->numChannels)].zb1 *setup->filters[j+k*(setup->numChannels)].b1 +
                              setup->filters[j+k*(setup->numChannels)].zb2 *setup->filters[j+k*(setup->numChannels)].b2  -
                              setup->filters[j+k*(setup->numChannels)].za1 * setup->filters[j+k*(setup->numChannels)].a1 -
@@ -154,7 +173,7 @@ static __inline void vDSP_biquadm(vDSP_biquadm_Setup setup,
                              setup->filters[j+k*(setup->numChannels)].zb2 = setup->filters[j+k*(setup->numChannels)].zb1;
                              
                              // zb1 = x[n]
-                             setup->filters[j+k*(setup->numChannels)].zb1 = input[0][i];
+                             setup->filters[j+k*(setup->numChannels)].zb1 = x;
                              
                              // za2 = za1
                              setup->filters[j+k*(setup->numChannels)].za2 = setup->filters[j+k*(setup->numChannels)].za1;

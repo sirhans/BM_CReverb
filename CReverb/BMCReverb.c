@@ -185,7 +185,7 @@ extern "C" {
         rv->twoChannelFilterData[0] = outputL;
         rv->twoChannelFilterData[1] = outputR;
         // apply a multilevel biquad filter to both channels
-        vDSP_biquadm(rv->mainFilterSetup, (const float* _Nonnull * _Nonnull)rv->twoChannelFilterData, 1, rv->twoChannelFilterData, 1, numSamples);
+        vDSP_biquadm(rv->mainFilterSetup, (const float**)rv->twoChannelFilterData, 1, rv->twoChannelFilterData, 1, numSamples);
         
         
         

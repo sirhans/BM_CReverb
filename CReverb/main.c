@@ -75,7 +75,7 @@ int main(int argc, const char * argv[]) {
     
     
     // process and print more frames
-    size_t numFramesToPrint = 100*44100/128;
+    size_t numFramesToPrint = 44100/128;
     while (numFramesToPrint-- != 0) {
         // turn the hold pedal on
         if (numFramesToPrint < 1400) BMCReverbSetSlowDecayState(&rv, true);
