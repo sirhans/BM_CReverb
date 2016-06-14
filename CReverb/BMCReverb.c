@@ -378,7 +378,7 @@ extern "C" {
     // This formula comes from solving EQ 11.33 in DESIGNING AUDIO EFFECT PLUG-INS IN C++ by Will Pirkle
     // which is attributed to Jot, originally.
     double BMCReverbDelayGainFromRT60(double rt60, double delayTime){
-        return pow(M_E, (-3.0 * delayTime) / rt60 );
+        return pow(10.0, (-3.0 * delayTime) / rt60 );
     }
     
     
