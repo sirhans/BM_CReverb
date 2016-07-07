@@ -25,19 +25,19 @@ extern "C" {
 #define BM_MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 #define BM_MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
     
-
+    
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
-
+    
 #ifndef M_E
 #define M_E 2.71828182845904523536
 #endif
-
+    
 #ifndef M_SQRT2
 #define M_SQRT2 1.41421356237309504880
 #endif
-
+    
     
     /*
      * these functions should be called only from functions within this file
@@ -435,7 +435,7 @@ extern "C" {
                 rv->b1[i] = 0.0f;
                 rv->a1[i] = 0.0f;
                 
-                // set the slow devay filter coefficients
+                // set the slow decay filter coefficients
                 rv->b0Slow[i] = 1.0f;
                 rv->b1Slow[i] = 0.0f;
                 rv->a1Slow[i] = 0.0f;
@@ -516,13 +516,13 @@ extern "C" {
     // constant as you as you adjust wet mix
     void BMCReverbSetWetGain(struct BMCReverb* rv, float wetGain){
         assert(wetGain >=0.0 && wetGain <=1.0);
-        rv->wetGain = wetGain;
-        rv->dryGain = sqrt(1.0f - (wetGain*wetGain));
+        rv->wetGain = sinf(M_PI_2*wetGain);
+        rv->dryGain = cosf(M_PI_2*wetGain);
     }
     
     
     
-	__inline void BMCReverbIncrementIndices(struct BMCReverb* rv){
+    __inline void BMCReverbIncrementIndices(struct BMCReverb* rv){
         // add one to each index
         for (size_t i=0; i<rv->numDelays; i++) rv->rwIndices[i]++;
         
@@ -793,7 +793,7 @@ extern "C" {
     
     // process a single sample of input from right and left channels
     // the output is 100% wet
-	__inline void BMCReverbProcessWetSample(struct BMCReverb* rv, float inputL, float inputR, float* outputL, float* outputR){
+    __inline void BMCReverbProcessWetSample(struct BMCReverb* rv, float inputL, float inputR, float* outputL, float* outputR){
         
         /*
          * mix feedback from previous sample with the fresh inputs

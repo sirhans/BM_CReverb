@@ -1,0 +1,154 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 10.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      4572,        145]
+NotebookOptionsPosition[      3844,        115]
+NotebookOutlinePosition[      4204,        131]
+CellTagsIndexPosition[      4161,        128]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Formula for gain based on delay time and RT60 Decay time", "Section",
+ CellChangeTimes->{{3.676758227294058*^9, 3.676758244163837*^9}}],
+
+Cell["\<\
+20 log rule:
+https://en.wikipedia.org/wiki/Gain_(electronics)
+
+dB power gain = 10 Log10 (Power out / Power In) 
+                        = 10 Log10 (  ( Voltage out / Voltage In )^2 ) 
+                        = 20 Log10 ( Voltage out / Voltage In ) \
+\>", "Text",
+ CellChangeTimes->{{3.67675821543054*^9, 3.676758220988407*^9}, {
+  3.6767582726706448`*^9, 3.676758392421914*^9}, {3.67675842614032*^9, 
+  3.676758456091434*^9}, {3.6767585308345413`*^9, 3.676758542058127*^9}}],
+
+Cell[BoxData["\[IndentingNewLine]"], "Input",
+ CellChangeTimes->{3.676758674936776*^9}],
+
+Cell["Here is the gain reduction equivalent to -60 db:", "Text",
+ CellChangeTimes->{{3.6767586293271723`*^9, 3.676758671475431*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Solve", "[", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"-", "60"}], " ", "==", " ", 
+    RowBox[{"20", " ", 
+     RowBox[{"Log10", " ", "[", "g", "]"}]}]}], ",", "g"}], "]"}]], "Input",
+ CellChangeTimes->{{3.67675825553872*^9, 3.676758258755558*^9}, {
+  3.676758468579389*^9, 3.676758479042843*^9}, {3.676758567889161*^9, 
+  3.676758604944956*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"{", 
+   RowBox[{"g", "\[Rule]", 
+    FractionBox["1", "1000"]}], "}"}], "}"}]], "Output",
+ CellChangeTimes->{{3.676758600996962*^9, 3.67675860565504*^9}}]
+}, Open  ]],
+
+Cell["\<\
+Solve by hand:
+
+Log10[g] == (-60/20)
+g == 10^(-3)\
+\>", "Text",
+ CellChangeTimes->{{3.676759391965369*^9, 3.676759469890222*^9}}],
+
+Cell["\<\
+If we want to apply this gain over time, so that we reach -60 Db at the \
+specified time,\
+\>", "Text",
+ CellChangeTimes->{{3.676758693465741*^9, 3.676758725546709*^9}, {
+  3.6767588940728693`*^9, 3.676758894119547*^9}, {3.676759486606037*^9, 
+  3.676759490701914*^9}, {3.676759978003746*^9, 3.676759983962426*^9}, {
+  3.676760100493701*^9, 3.676760114133202*^9}}],
+
+Cell["\<\
+g^(RT60InSeconds/delayTime) == 1/1000
+Log[g,g^RT60InSeconds/delayTime] == Log[g,1/1000]
+RT60TimeInSeconds/delayTime == Log[g,10^-3]
+RT60TimeInSeconds/delayTime == Log10[10^-3]/Log10[g]
+RT60TimeInSeconds/delayTime * Log10[g] == -3
+Log10[g] == -3*delayTime / RT60TimeInSeconds
+g = 10^(-3*delayTime / RT60TimeInSeconds)\
+\>", "Text",
+ CellChangeTimes->{{3.676758942285612*^9, 3.676759009514167*^9}, {
+   3.6767590412438717`*^9, 3.67675910291407*^9}, 3.676759205340229*^9, {
+   3.676759264158204*^9, 3.6767593245159197`*^9}, {3.676759501239581*^9, 
+   3.6767595201264057`*^9}, {3.67675955830622*^9, 3.6767599129886713`*^9}, {
+   3.676760067025507*^9, 3.676760090238892*^9}, {3.6767601456819887`*^9, 
+   3.676760223539281*^9}, {3.676760326221445*^9, 3.676760359428393*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Here is the final formula:", "Section",
+ CellChangeTimes->{{3.6767604429912024`*^9, 3.6767604499893007`*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"g", "[", 
+   RowBox[{"delayTime_", ",", "RT60Time_"}], "]"}], " ", ":=", " ", 
+  RowBox[{"10", "^", 
+   RowBox[{"(", 
+    RowBox[{
+     RowBox[{"-", "3"}], " ", 
+     RowBox[{"delayTime", " ", "/", " ", "RT60Time"}]}], ")"}]}]}]], "Input",
+ CellChangeTimes->{{3.676760383049549*^9, 3.676760428094118*^9}}]
+}, Open  ]]
+},
+WindowSize->{808, 751},
+WindowMargins->{{Automatic, 235}, {Automatic, -1006}},
+FrontEndVersion->"10.3 for Mac OS X x86 (32-bit, 64-bit Kernel) (October 9, \
+2015)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 141, 1, 64, "Section"],
+Cell[724, 25, 484, 10, 125, "Text"],
+Cell[1211, 37, 87, 1, 46, "Input"],
+Cell[1301, 40, 132, 1, 30, "Text"],
+Cell[CellGroupData[{
+Cell[1458, 45, 366, 9, 28, "Input"],
+Cell[1827, 56, 194, 5, 48, "Output"]
+}, Open  ]],
+Cell[2036, 64, 139, 6, 87, "Text"],
+Cell[2178, 72, 374, 7, 30, "Text"],
+Cell[2555, 81, 778, 14, 144, "Text"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[3370, 100, 115, 1, 64, "Section"],
+Cell[3488, 103, 340, 9, 28, "Input"]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
